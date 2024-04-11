@@ -8,6 +8,7 @@ import {
 import { Observable } from "rxjs";
 import { AuthenticatedRequest, JwtPayloadDecoded } from "../interfaces/auth";
 import { AppJwtTokenService } from "src/utils/appJwtToken/appJwtToken.service";
+import { AUTHORIZATION_ERRORS } from "src/errorEnum/authorizationError";
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -30,7 +31,7 @@ export class JwtAuthGuard implements CanActivate {
 			// If there is no token in the header we throw an error
 			if (!authHeader) {
 				throw new HttpException(
-					"Auth token not provided",
+					AUTHORIZATION_ERRORS.NO_AUTH_TOKEN,
 					HttpStatus.UNAUTHORIZED,
 				);
 			}
@@ -39,7 +40,7 @@ export class JwtAuthGuard implements CanActivate {
 			const [bearer, token] = authHeader.split(" ");
 			if (bearer !== "Bearer" || !token) {
 				throw new HttpException(
-					"Invalid token format",
+					AUTHORIZATION_ERRORS.INVALID_AUTH_TOKEN,
 					HttpStatus.UNAUTHORIZED,
 				);
 			}
@@ -54,7 +55,7 @@ export class JwtAuthGuard implements CanActivate {
 		} catch (err) {
 			// If the token is expired or in invalid format we throw an error
 			throw new HttpException(
-				"Invalid or expired token",
+				AUTHORIZATION_ERRORS.INVALID_OR_EXPIRED,
 				HttpStatus.UNAUTHORIZED,
 			);
 		}
