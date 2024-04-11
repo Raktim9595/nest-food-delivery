@@ -11,6 +11,7 @@ import {
 	HttpStatus,
 	ParseIntPipe,
 	HttpException,
+	UseGuards,
 } from "@nestjs/common";
 import { UserService } from "./user.service";
 import { CreateUserDto } from "./dto/create-user.dto";
@@ -24,6 +25,7 @@ import {
 	ApiTags,
 	refs,
 } from "@nestjs/swagger";
+import { JwtAuthGuard } from "src/common/guards/jwt-auth.guard";
 
 @ApiTags("Users")
 @Controller("api/v1/users")
@@ -77,6 +79,8 @@ export class UserController {
 		return response.json(foundUser);
 	}
 
+	@UseGuards(JwtAuthGuard)
+	@ApiBearerAuth()
 	@Patch(":id")
 	update(@Param("id") id: string) {
 		return this.authService.update(+id);

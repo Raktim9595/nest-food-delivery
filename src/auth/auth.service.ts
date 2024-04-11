@@ -2,19 +2,17 @@ import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { PasswordUtils } from "src/utils/passwordUtils";
 import { SignInDto } from "./dto/signIn-dto";
 import { UserService } from "src/user/user.service";
-import { JwtService } from "@nestjs/jwt";
 import { SignInResponseDto } from "./dto/signin-response-dto";
 import { plainToInstance } from "class-transformer";
-import { AppConfigService } from "src/config/app/config.service";
 import { AUTH_ERRORS } from "./enum/error";
+import { AppJwtTokenService } from "src/utils/appJwtToken/appJwtToken.service";
 
 @Injectable()
 export class AuthService {
 	constructor(
 		private readonly passwordUtils: PasswordUtils,
 		private readonly userService: UserService,
-		private readonly jwtService: JwtService,
-		private readonly appConfig: AppConfigService,
+		private readonly appJwtTokenService: AppJwtTokenService,
 	) {}
 
 	/**
@@ -41,26 +39,14 @@ export class AuthService {
 			);
 
 		// generate access token and refresh tokens using jwt services
-		const accessToken = await this.jwtService.signAsync(
-			{
-				id: foundUser.id,
-				email: foundUser.email,
-			},
-			{
-				secret: this.appConfig.accessTokenSecret,
-				expiresIn: "1d",
-			},
+		const accessToken = await this.appJwtTokenService.generateAccessToken(
+			foundUser.id,
+			foundUser.email,
 		);
 
 		// generate the refresh token along with the access token so when access token is expired we can generate new set of tokens using the refresh tokens
-		const refreshToken = await this.jwtService.signAsync(
-			{
-				id: foundUser.id,
-			},
-			{
-				secret: this.appConfig.refreshTokenSecret,
-				expiresIn: "3d",
-			},
+		const refreshToken = await this.appJwtTokenService.generateRefreshToken(
+			foundUser.id,
 		);
 
 		// appending the accessToken for response format to pass to controllers
