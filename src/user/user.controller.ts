@@ -10,8 +10,8 @@ import {
 	HttpCode,
 	HttpStatus,
 	ParseIntPipe,
-	HttpException,
 	UseGuards,
+	Req,
 } from "@nestjs/common";
 import { UserService } from "./user.service";
 import { CreateUserDto } from "./dto/create-user.dto";
@@ -26,11 +26,14 @@ import {
 	refs,
 } from "@nestjs/swagger";
 import { JwtAuthGuard } from "src/common/guards/jwt-auth.guard";
+import { UpdateUserDto } from "./dto/update-user.dto";
+import { AuthenticatedRequest } from "src/common/interfaces/auth";
+import { controllerWrapper } from "src/utils/controllerWrapper";
 
 @ApiTags("Users")
 @Controller("api/v1/users")
 export class UserController {
-	constructor(private readonly authService: UserService) {}
+	constructor(private readonly userService: UserService) {}
 
 	@Post("signUp")
 	@HttpCode(HttpStatus.CREATED)
@@ -44,19 +47,17 @@ export class UserController {
 		@Body() createUserDto: CreateUserDto,
 		@Res() response: Response<CreationResponse>,
 	): Promise<Response<CreationResponse>> {
-		try {
-			const signUpStatus = await this.authService.create(createUserDto);
+		return controllerWrapper(async () => {
+			const signUpStatus = await this.userService.create(createUserDto);
 			return response.json({
 				created: signUpStatus,
 			});
-		} catch (err) {
-			throw new HttpException(err.message, 500);
-		}
+		});
 	}
 
 	@Get()
 	findAll() {
-		return this.authService.findAll();
+		return this.userService.findAll();
 	}
 
 	@Get(":id")
@@ -75,20 +76,51 @@ export class UserController {
 		@Param("id", ParseIntPipe) id: number,
 		@Res() response: Response<UserResponseDto>,
 	): Promise<Response<UserResponseDto>> {
-		const foundUser = await this.authService.findById(id);
+		const foundUser = await this.userService.findById(id);
 		return response.json(foundUser);
 	}
 
 	@UseGuards(JwtAuthGuard)
 	@ApiBearerAuth()
 	@Patch(":id")
-	update(@Param("id") id: string) {
-		return this.authService.update(+id);
+	/**
+	 * Update a user by id
+	 * @param userToUpdateId ID of the user to update
+	 * @param request The authenticated request, used to get the authenticated user's ID
+	 * @param body The new user data
+	 * @param response The express response object
+	 * @returns A JSON response containing the status of the update
+	 */
+	async update(
+		@Param("id", ParseIntPipe) userToUpdateId: number,
+		@Req() request: AuthenticatedRequest,
+		@Body() body: UpdateUserDto,
+		@Res() response: Response,
+	): Promise<Response> {
+		return controllerWrapper(async () => {
+			const updateUserServiceResult = await this.userService.updateById(
+				userToUpdateId,
+				request.id,
+				body,
+			);
+			return response.json({ updated: updateUserServiceResult });
+		});
 	}
 
+	@UseGuards(JwtAuthGuard)
 	@Delete(":id")
 	@ApiBearerAuth()
-	remove(@Param("id") id: string) {
-		return this.authService.remove(+id);
+	remove(
+		@Param("id", ParseIntPipe) userIdToDelete: number,
+		@Req() request: AuthenticatedRequest,
+		@Res() response: Response,
+	): Promise<Response> {
+		return controllerWrapper(async () => {
+			const deleteUserStatus = await this.userService.deleteById(
+				userIdToDelete,
+				request.id,
+			);
+			return response.json({ deleted: deleteUserStatus });
+		});
 	}
 }

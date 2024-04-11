@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "src/common/prisma/prisma.service";
 import { CreateUserDto } from "./dto/create-user.dto";
 import { User } from "@prisma/client";
+import { UpdateUserDto } from "./dto/update-user.dto";
 
 @Injectable()
 export class UserRepositories {
@@ -30,5 +31,26 @@ export class UserRepositories {
 			},
 		});
 		return foundUser;
+	}
+
+	async updateById(
+		id: number,
+		updateUserData: UpdateUserDto,
+	): Promise<UpdateUserDto> {
+		const updateResult = await this.userPrismaClient.user.update({
+			where: {
+				id,
+			},
+			data: updateUserData,
+		});
+		return updateResult;
+	}
+
+	async deleteById(id: number): Promise<User> {
+		const deletedUser = await this.userPrismaClient.user.delete({
+			where: { id },
+		});
+
+		return deletedUser;
 	}
 }
