@@ -40,4 +40,10 @@ export class UserResponseDto {
 		type: String,
 	})
 	age: number;
+
+	@Exclude()
+	createdAt: Date;
+
+	@Exclude()
+	updatedAt: Date;
 }
