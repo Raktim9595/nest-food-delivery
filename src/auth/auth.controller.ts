@@ -17,12 +17,18 @@ import { Response } from "express";
 export class AuthController {
 	constructor(private readonly authService: AuthService) {}
 
+	/**
+	 * Sign in user
+	 * @param body - user credentials
+	 * @param response - response object to return the result
+	 * @returns Promise with the result
+	 */
 	@Post("/signIn")
 	@HttpCode(HttpStatus.OK)
 	async signIn(
 		@Body() body: SignInDto,
 		@Res() response: Response<SignInResponseDto>,
-	) {
+	): Promise<Response<SignInResponseDto>> {
 		const result = await this.authService.signIn(body);
 		return response.json(result);
 	}

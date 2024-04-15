@@ -21,6 +21,12 @@ export class SignInResponseDto {
 	@Exclude()
 	age: number;
 
+	@Exclude()
+	createdAt: Date;
+
+	@Exclude()
+	updatedAt: Date;
+
 	accessToken: string;
 	refreshToken: string;
 }
